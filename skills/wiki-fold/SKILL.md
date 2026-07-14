@@ -146,12 +146,10 @@ If any check fails, abort and report the specific failure.
 **Commit** (only after user says "commit the fold"):
 1. `Write` the fold page to `wiki/folds/{FOLD-ID}.md`. (PostToolUse hook will auto-commit this.)
 2. `Edit` `wiki/index.md` to add the fold link under a `## Folds` section (create section if missing). (Hook auto-commits.)
-3. `Edit` `wiki/log.md` to prepend one entry:
+3. `Edit` `wiki/log.md` to prepend one entry (OKF §7 format — date-only heading, newest first; add the bullet under today's `## YYYY-MM-DD` heading if it's already topmost, else insert a new one):
    ```
-   ## YYYY-MM-DD fold | batch-exponent-k{K} rollup of N entries
-   - Location: wiki/folds/{FOLD-ID}.md
-   - Range: {EARLIEST-DATE} to {LATEST-DATE}
-   - Children: N log entries
+   ## YYYY-MM-DD
+   * **fold**: batch-exponent-k{K} rollup of N entries — Location: wiki/folds/{FOLD-ID}.md; Range: {EARLIEST-DATE} to {LATEST-DATE}; Children: N log entries
    ```
    (Hook auto-commits.)
 

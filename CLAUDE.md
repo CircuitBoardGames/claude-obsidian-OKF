@@ -17,9 +17,11 @@ Knowledge Format v0.1](https://github.com/scaccogatto/okf-skills) — the same
 markdown + YAML frontmatter convention consumed by any OKF-aware agent, not
 just this plugin. Every generated page carries `type` (the one hard OKF
 requirement) plus the recommended `title`, `description`, and `timestamp`
-fields; `log.md` date headings are plain `YYYY-MM-DD` (not bracketed), which
-is what OKF's §7 conformance check expects. See
-`skills/wiki/references/frontmatter.md` for the full schema.
+fields; `wiki/log.md` groups entries under a date-only `## YYYY-MM-DD` heading
+(newest first, one heading per day, multiple `* **op**: ...` bullets per
+heading), per OKF §7 — not one heading per entry with the op/title baked into
+the heading text. See `skills/wiki/references/frontmatter.md` for the frontmatter
+schema.
 
 Conformance is enforced going forward, at the generator (skill templates and
 `scripts/tiling-check.py`) — content already filed before this change was not

@@ -232,14 +232,10 @@ sources:
 ## After Filing
 
 1. Update `wiki/index.md`. Add all new pages to the right sections
-2. Append to `wiki/log.md` (at the TOP):
+2. Append to `wiki/log.md` (OKF §7 format — date-only heading, newest first). If the topmost `## ` heading is already today's `YYYY-MM-DD`, add the bullet under it; otherwise insert a new `## YYYY-MM-DD` heading above the previous one:
    ```
-   ## YYYY-MM-DD autoresearch | [Topic]
-   - Rounds: N
-   - Sources found: N
-   - Pages created: [[Page 1]], [[Page 2]], ...
-   - Synthesis: [[Research: Topic]]
-   - Key finding: [one sentence]
+   ## YYYY-MM-DD
+   * **autoresearch**: [Topic] — Rounds: N; Sources found: N; Pages created: [[Page 1]], [[Page 2]], ...; Synthesis: [[Research: Topic]]; Key finding: [one sentence]
    ```
 3. Update `wiki/hot.md` with the research summary
 

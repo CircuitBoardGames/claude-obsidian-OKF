@@ -95,12 +95,10 @@ The mode router (`python3 scripts/wiki-mode.py route session "<topic>"`) applies
 5. **Create** the note in `<destination-root>/<chosen-folder>/<title>.md` (per Step 0). Full frontmatter. If a note with the same path already exists, ASK before overwriting.
 6. **Collect links**: identify any wiki pages mentioned in the conversation. Add them to `related` in frontmatter.
 7. **Update** `wiki/index.md`. Add the new entry at the top of the relevant section.
-8. **Append** to `wiki/log.md`. New entry at the TOP:
+8. **Append** to `wiki/log.md` (OKF §7 format — date-only heading, newest first). If the topmost `## ` heading is already today's `YYYY-MM-DD`, add the bullet under it; otherwise insert a new `## YYYY-MM-DD` heading above the previous one:
    ```
-   ## YYYY-MM-DD save | Note Title
-   - Type: [note type]
-   - Location: wiki/[folder]/Note Title.md
-   - From: conversation on [brief topic description]
+   ## YYYY-MM-DD
+   * **save**: Note Title — Type: [note type]; Location: wiki/[folder]/Note Title.md; From: conversation on [brief topic description]
    ```
 9. **Update** `wiki/hot.md` to reflect the new addition.
 10. **Confirm**: "Saved as [[Note Title]] in wiki/[folder]/."

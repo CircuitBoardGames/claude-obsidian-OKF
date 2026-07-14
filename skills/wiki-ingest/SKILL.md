@@ -175,14 +175,10 @@ Steps:
 7. **Update** `wiki/overview.md` if the big picture changed.
 8. **Update** `wiki/index.md`. Add entries for all new pages.
 9. **Update** `wiki/hot.md` with this ingest's context.
-10. **Append** to `wiki/log.md` (new entries at the TOP):
+10. **Append** to `wiki/log.md` (OKF §7 format — date-only heading, newest first). If the topmost `## ` heading is already today's `YYYY-MM-DD`, add the bullet under it; otherwise insert a new `## YYYY-MM-DD` heading above the previous one:
     ```markdown
-    ## YYYY-MM-DD ingest | Source Title
-    - Source: `.raw/articles/filename.md`
-    - Summary: [[Source Title]]
-    - Pages created: [[Page 1]], [[Page 2]]
-    - Pages updated: [[Page 3]], [[Page 4]]
-    - Key insight: One sentence on what is new.
+    ## YYYY-MM-DD
+    * **ingest**: Source Title — Source: `.raw/articles/filename.md`; Summary: [[Source Title]]; Pages created: [[Page 1]], [[Page 2]]; Pages updated: [[Page 3]], [[Page 4]]; Key insight: One sentence on what is new.
     ```
 11. **Check for contradictions.** If new info conflicts with existing pages, add `> [!contradiction]` callouts on both pages.
 
