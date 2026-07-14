@@ -105,19 +105,6 @@ After staging changes for a non-trivial workstream but BEFORE running `git commi
 If you configured the MCP server, Claude can read and write vault notes directly.
 See `skills/wiki/references/mcp-setup.md` for setup instructions.
 
-## GitHub release asset attachment (agent-session convention)
-
-The above `git tag` + `gh release create` flow assumes local `gh` CLI access. In an agent session
-without it (GitHub MCP tools only — no create-release/create-tag/upload-asset tool, and tag pushes
-are rejected by the git proxy even though branch pushes work), attach files to an existing release
-via a GitHub Actions workflow instead: the Actions-native `GITHUB_TOKEN` has `contents: write`
-there. Canonical example: `.github/workflows/vault-viewer-release-asset.yml` in
-[`CircuitBoardGames/webobsidian-GitPusher`](https://github.com/CircuitBoardGames/webobsidian-GitPusher)
-— `workflow_dispatch` + `softprops/action-gh-release` with `tag_name`/`files`, triggered via the
-`actions_run_trigger` MCP tool. The release/tag itself still needs to exist first (created manually
-or via `gh` locally). Use this pattern for release-asset attachment in any repo from an agent
-session, not just that one.
-
 ## Release Blog Post
 
 After cutting a new release (git tag + `gh release create`), run:
