@@ -365,10 +365,18 @@ def run_check(
     errors = [p for p in pairs if p[0] >= error_]
     reviews = [p for p in pairs if review <= p[0] < error_]
 
+    generated_at = f"{datetime.utcnow().isoformat(timespec='seconds')}Z"
     out_lines: list[str] = []
+    out_lines.append("---")
+    out_lines.append("type: meta")
+    out_lines.append('title: "Semantic Tiling Report"')
+    out_lines.append('description: "Per-page embedding similarity report from the wiki-retrieve tiling check."')
+    out_lines.append(f"timestamp: {generated_at}")
+    out_lines.append("---")
+    out_lines.append("")
     out_lines.append("# Semantic Tiling Report")
     out_lines.append("")
-    out_lines.append(f"- generated: {datetime.utcnow().isoformat(timespec='seconds')}Z")
+    out_lines.append(f"- generated: {generated_at}")
     out_lines.append(f"- model: {model}")
     out_lines.append(f"- ollama_url: {ollama_url}")
     out_lines.append(f"- thresholds: error>={error_}, review={review}-{error_}")

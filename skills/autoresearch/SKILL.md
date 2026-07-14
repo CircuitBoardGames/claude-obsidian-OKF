@@ -184,8 +184,10 @@ After research is complete, create these pages:
 ---
 type: synthesis
 title: "Research: [Topic]"
+description: "One-sentence summary of this research synthesis."
 created: YYYY-MM-DD
 updated: YYYY-MM-DD
+timestamp: YYYY-MM-DDTHH:MM:SS
 tags:
   - research
   - [topic-tag]
@@ -232,7 +234,7 @@ sources:
 1. Update `wiki/index.md`. Add all new pages to the right sections
 2. Append to `wiki/log.md` (at the TOP):
    ```
-   ## [YYYY-MM-DD] autoresearch | [Topic]
+   ## YYYY-MM-DD autoresearch | [Topic]
    - Rounds: N
    - Sources found: N
    - Pages created: [[Page 1]], [[Page 2]], ...

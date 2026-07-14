@@ -97,7 +97,7 @@ The mode router (`python3 scripts/wiki-mode.py route session "<topic>"`) applies
 7. **Update** `wiki/index.md`. Add the new entry at the top of the relevant section.
 8. **Append** to `wiki/log.md`. New entry at the TOP:
    ```
-   ## [YYYY-MM-DD] save | Note Title
+   ## YYYY-MM-DD save | Note Title
    - Type: [note type]
    - Location: wiki/[folder]/Note Title.md
    - From: conversation on [brief topic description]
@@ -113,8 +113,10 @@ The mode router (`python3 scripts/wiki-mode.py route session "<topic>"`) applies
 ---
 type: <synthesis|concept|source|decision|session>
 title: "Note Title"
+description: "One-sentence summary of this note."
 created: YYYY-MM-DD
 updated: YYYY-MM-DD
+timestamp: YYYY-MM-DDTHH:MM:SS
 tags:
   - <relevant-tag>
 status: developing

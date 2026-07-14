@@ -148,7 +148,7 @@ If any check fails, abort and report the specific failure.
 2. `Edit` `wiki/index.md` to add the fold link under a `## Folds` section (create section if missing). (Hook auto-commits.)
 3. `Edit` `wiki/log.md` to prepend one entry:
    ```
-   ## [YYYY-MM-DD] fold | batch-exponent-k{K} rollup of N entries
+   ## YYYY-MM-DD fold | batch-exponent-k{K} rollup of N entries
    - Location: wiki/folds/{FOLD-ID}.md
    - Range: {EARLIEST-DATE} to {LATEST-DATE}
    - Children: N log entries

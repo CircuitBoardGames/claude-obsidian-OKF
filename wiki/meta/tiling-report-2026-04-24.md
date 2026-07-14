@@ -1,3 +1,10 @@
+---
+type: meta
+title: "Semantic Tiling Report"
+description: "Per-page embedding similarity report from the wiki-retrieve tiling check."
+timestamp: 2026-04-24T09:20:59Z
+---
+
 # Semantic Tiling Report
 
 - generated: 2026-04-24T09:20:59Z

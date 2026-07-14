@@ -1,6 +1,7 @@
 ---
 type: comparison
 title: "<% tp.file.title %>"
+description: "Replace with a one-sentence summary."
 subjects:
   - "[[Subject A]]"
   - "[[Subject B]]"
@@ -10,6 +11,7 @@ dimensions:
 verdict: "Replace with one-line conclusion."
 created: <% tp.date.now("YYYY-MM-DD") %>
 updated: <% tp.date.now("YYYY-MM-DD") %>
+timestamp: <% tp.date.now("YYYY-MM-DDTHH:mm:ss") %>
 tags:
   - comparison
 status: seed

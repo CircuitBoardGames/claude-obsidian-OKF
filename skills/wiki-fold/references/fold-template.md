@@ -10,6 +10,7 @@ Canonical output format for `wiki-fold`. Every fold page uses this layout exactl
 ---
 type: fold
 title: "Fold k{K} — {EARLIEST-DATE} to {LATEST-DATE} — n{COUNT}"
+description: "Rollup of {COUNT} log entries from {EARLIEST-DATE} to {LATEST-DATE}."
 fold_id: "fold-k{K}-from-{EARLIEST-DATE}-to-{LATEST-DATE}-n{COUNT}"
 batch_exponent: {K}
 entry_count: {COUNT}
@@ -18,6 +19,7 @@ entry_range:
   to: "{LATEST-CHILD-DATE}"
 created: "{YYYY-MM-DD}"
 updated: "{YYYY-MM-DD}"
+timestamp: "{YYYY-MM-DDTHH:MM:SS}"
 tags:
   - meta
   - fold

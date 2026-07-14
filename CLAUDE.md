@@ -10,6 +10,26 @@ This folder is both a Claude Code plugin and an Obsidian vault.
 
 This vault demonstrates the LLM Wiki pattern — a persistent, compounding knowledge base for Claude + Obsidian. Drop any source, ask any question, and the wiki grows richer with every session.
 
+## Open Knowledge Format (OKF) conformance
+
+This fork (`claude-obsidian-OKF`) generates `wiki/` pages that conform to [Open
+Knowledge Format v0.1](https://github.com/scaccogatto/okf-skills) — the same
+markdown + YAML frontmatter convention consumed by any OKF-aware agent, not
+just this plugin. Every generated page carries `type` (the one hard OKF
+requirement) plus the recommended `title`, `description`, and `timestamp`
+fields; `log.md` date headings are plain `YYYY-MM-DD` (not bracketed), which
+is what OKF's §7 conformance check expects. See
+`skills/wiki/references/frontmatter.md` for the full schema.
+
+Conformance is enforced going forward, at the generator (skill templates and
+`scripts/tiling-check.py`) — content already filed before this change was not
+back-filled page-by-page. Validate any `wiki/` directory with the OKF
+`validate` skill's checker (from a repo that has it vendored):
+
+```bash
+uv run <path-to>/okf_validate.py wiki --strict
+```
+
 ## Vault Structure
 
 ```

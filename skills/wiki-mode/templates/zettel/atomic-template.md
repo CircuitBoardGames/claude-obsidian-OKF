@@ -2,7 +2,9 @@
 type: zettel
 id: "{{id}}"
 title: "{{title}}"
+description: "Replace with a one-sentence summary."
 created: "{{date}}"
+timestamp: "{{date}}T00:00:00"
 parent_id: ""
 child_ids: []
 tags: []

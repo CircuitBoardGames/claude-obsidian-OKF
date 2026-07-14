@@ -1,8 +1,10 @@
 ---
 type: resource
 title: "{{title}}"
+description: "Replace with a one-sentence summary."
 topic: "{{topic}}"
 created: "{{date}}"
+timestamp: "{{date}}T00:00:00"
 tags:
   - resource
 sources: []

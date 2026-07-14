@@ -69,7 +69,9 @@ Format:
 ---
 type: meta
 title: "Hot Cache"
+description: "Rolling ~500-word summary of the most recent vault context."
 updated: YYYY-MM-DDTHH:MM:SS
+timestamp: YYYY-MM-DDTHH:MM:SS
 ---
 
 # Recent Context
