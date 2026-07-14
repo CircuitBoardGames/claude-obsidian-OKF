@@ -1,12 +1,12 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
-  "name": "agricidaniel-claude-obsidian",
+  "name": "circuitboardgames-claude-obsidian-okf",
   "owner": {
-    "name": "AgriciDaniel",
-    "url": "https://github.com/AgriciDaniel"
+    "name": "CircuitBoardGames",
+    "url": "https://github.com/CircuitBoardGames"
   },
   "metadata": {
-    "description": "claude-obsidian: a self-organizing AI second brain for Obsidian + Claude Code by AgriciDaniel. A persistent, compounding wiki vault of plain Markdown you own, based on Karpathy's LLM Wiki pattern.",
+    "description": "claude-obsidian-OKF: CircuitBoardGames' fork of AgriciDaniel's claude-obsidian, a self-organizing AI second brain for Obsidian + Claude Code, with generated output made Open Knowledge Format v0.1-conformant. A persistent, compounding wiki vault of plain Markdown you own, based on Karpathy's LLM Wiki pattern.",
     "version": "1.9.2"
   },
   "plugins": [
@@ -19,8 +19,8 @@
         "name": "AgriciDaniel",
         "url": "https://github.com/AgriciDaniel"
       },
-      "homepage": "https://github.com/AgriciDaniel/claude-obsidian",
-      "repository": "https://github.com/AgriciDaniel/claude-obsidian",
+      "homepage": "https://github.com/CircuitBoardGames/claude-obsidian-OKF",
+      "repository": "https://github.com/CircuitBoardGames/claude-obsidian-OKF",
       "license": "MIT"
     }
   ]
