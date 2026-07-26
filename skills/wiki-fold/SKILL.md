@@ -1,6 +1,6 @@
 ---
 name: wiki-fold
-description: "Rollup of wiki log entries into meta-pages. Reads the last 2^k entries from wiki/log.md, writes a structurally-idempotent fold page to wiki/folds/ that links back to children. Extractive summarization (no invention). Dry-run by default, stdout-only; commit mode writes and accepts that the PostToolUse hook auto-commits. Triggers on: fold the log, run a fold, run wiki-fold, log rollup, roll up log entries."
+description: "Rollup of wiki log entries into meta-pages. Reads the oldest 2^k entries no earlier fold has covered, writes a structurally-idempotent fold page to wiki/folds/ that links back to children. Extractive summarization (no invention). Dry-run by default, stdout-only; commit mode writes and accepts that the PostToolUse hook auto-commits. Triggers on: fold the log, run a fold, run wiki-fold, log rollup, roll up log entries."
 ---
 
 # wiki-fold: Extractive Log Rollup
@@ -82,19 +82,36 @@ The filename in commit mode is `wiki/folds/{FOLD-ID}.md`. No date-of-creation in
 - `--force`: overwrite an existing fold with the same ID. Default no.
 - `--commit`: write to wiki/. Without it, dry-run stdout-only.
 
-If fewer than `2^k` log entries exist, report the shortfall and stop. Do not silently fold a partial batch.
+If fewer than `2^k` **uncovered** log entries exist, report the shortfall and stop. Do not silently fold a partial batch.
 
 ---
 
 ## Procedure
 
-### 1. Parse log entries
+### 1. Parse log entries — and subtract what earlier folds already cover
+
+**A fold is additive, so the newest entries are the ones the previous fold already folded.** Children stay in `log.md`; nothing is moved or deleted. Taking `head -{2^k}` is therefore correct only for a vault's FIRST fold. On the second run it re-folds the same entries, producing two fold pages that claim the same children.
+
+List every heading, then subtract the covered ones:
 
 ```
-grep -n "^## \[" wiki/log.md | head -{2^k}
+# every log entry, newest first
+grep -n "^## \[" wiki/log.md
+
+# what previous folds already cover: each fold's children[].title
+grep -h '^    title:' wiki/folds/*.md 2>/dev/null
 ```
 
-Record for each entry: line number, date, operation, title, and the following bullet lines until the next `## [` or end-of-section.
+An entry is **covered** when its heading title appears as a `children[].title` in any fold page. Two further exclusions:
+
+- A fold's own log entry (`## [DATE] fold | …`) is bookkeeping, not a foldable entry — folding it nests a fold inside a fold.
+- Titles are compared verbatim. If a fold recorded a paraphrased title, matching fails and its children look uncovered — see the verbatim rule in step 4, which exists for exactly this reason.
+
+From the uncovered set, take the **oldest contiguous run** of `2^k` entries. Oldest, because a rollup should compress history and leave recent entries readable in the raw log. Contiguous, because a fold whose children are scattered across the log is far harder to reason about than one that tiles a span — with successive folds tiling, any log position belongs to at most one fold.
+
+Sanity check before proceeding: `covered + uncovered` must equal the total heading count minus the fold entries. If it does not, a fold's `children[].title` has drifted from its heading and coverage is being under-counted — fix the fold page before folding anything new.
+
+Record for each selected entry: line number, date, operation, title, and the following bullet lines until the next `## [` or end-of-section.
 
 ### 2. Extract child page identifiers
 
@@ -134,6 +151,8 @@ Write the fold body per `references/fold-template.md`. **Rules**:
 Before printing output, verify:
 - Every child in `children:` frontmatter appears exactly once in the Child Entries table.
 - Every entry in the table appears in the `children:` frontmatter.
+- Every `children[].title` is the log heading **verbatim** — byte-for-byte, including quotation marks, arrows and any trailing clause. Not "close enough". This is what step 1 matches on to decide coverage, so a paraphrase makes those children look unfolded forever and invites a second fold over the same entries. Grep each title back against `wiki/log.md` and require a hit.
+- No selected entry is already a child of an existing fold (step 1's subtraction, re-verified here — the two are cheap and disagree loudly when one is wrong).
 - Every numeric claim in Key Outcomes is grep-verifiable against a child entry.
 - The fold ID is deterministic and the file does not already exist (or `--force` is set).
 
@@ -166,10 +185,11 @@ See `references/fold-template.md` for the canonical frontmatter and body layout.
 ## Invariants
 
 1. **Structural idempotency**: same range + same k → same fold ID → duplicate detection prevents double-writes. LLM prose may vary across runs; the *location and scope* are fixed.
-2. **Additive**: children are never modified.
-3. **Bounded reads**: 0-15 child-page reads per fold.
-4. **Extractive**: zero invented facts. Count checks enforced.
-5. **No chaining**: wiki-fold does not invoke wiki-lint, wiki-ingest, autoresearch, or save.
+2. **Folds partition the log**: every entry is a child of at most one fold. Guaranteed by step 1 subtracting existing coverage before selecting, NOT by the fold ID check — two folds over different-but-overlapping ranges have different IDs, so the ID check alone would happily write both.
+3. **Additive**: children are never modified.
+4. **Bounded reads**: 0-15 child-page reads per fold.
+5. **Extractive**: zero invented facts. Count checks enforced.
+6. **No chaining**: wiki-fold does not invoke wiki-lint, wiki-ingest, autoresearch, or save.
 
 ---
 
