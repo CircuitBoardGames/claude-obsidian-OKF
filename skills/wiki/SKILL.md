@@ -37,7 +37,7 @@ Standard wiki structure:
 wiki/
 ├── index.md            # master catalog of all pages
 ├── log.md              # chronological record of all operations
-├── hot.md              # hot cache: recent context summary (~500 words)
+├── hot.md              # hot cache: recent context summary (vault-declared budget, default ~500 words)
 ├── overview.md         # executive summary of the whole wiki
 ├── sources/            # one summary page per raw source
 ├── entities/           # people, orgs, products, repos
@@ -57,7 +57,14 @@ Dot-prefixed folders (`.raw/`) are hidden in Obsidian's file explorer and graph 
 
 ## Hot Cache
 
-`wiki/hot.md` is a ~500-word summary of the most recent context. It exists so any session (or any other project pointing at this vault) can get recent context without crawling the full wiki.
+`wiki/hot.md` is a short summary of the most recent context. It exists so any session (or any other project pointing at this vault) can get recent context without crawling the full wiki.
+
+**Budget: whatever the vault declares, default ~500 words.** If the vault's `CLAUDE.md` states a
+budget, that number wins — check it before trimming. The ceiling is not about token cost (a
+thousand words is immaterial against a session's context window); it exists so the cache cannot
+grow into a second log, which the vault already has in `log.md`. A vault carrying many durable
+rules may legitimately declare a larger budget; hold the declared one rather than trimming to this
+default and evicting something load-bearing.
 
 Update hot.md:
 - After every ingest
@@ -69,7 +76,7 @@ Format:
 ---
 type: meta
 title: "Hot Cache"
-description: "Rolling ~500-word summary of the most recent vault context."
+description: "Rolling summary of the most recent vault context."
 updated: YYYY-MM-DDTHH:MM:SS
 timestamp: YYYY-MM-DDTHH:MM:SS
 ---
@@ -93,7 +100,7 @@ YYYY-MM-DD. [what happened]
 - Open question: [thing still being investigated]
 ```
 
-Keep it under 500 words. It is a cache, not a journal. Overwrite it completely each time.
+Keep it within the vault's declared budget (default ~500 words — see Hot Cache above). It is a cache, not a journal. Overwrite it completely each time.
 
 ---
 
@@ -176,7 +183,7 @@ In another project's CLAUDE.md, add:
 Path: ~/path/to/vault
 
 When you need context not already in this project:
-1. Read wiki/hot.md first (recent context, ~500 words)
+1. Read wiki/hot.md first (recent context, one short page)
 2. If not enough, read wiki/index.md (full catalog)
 3. If you need domain specifics, read wiki/<domain>/_index.md
 4. Only then read individual wiki pages
