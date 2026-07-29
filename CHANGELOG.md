@@ -2,6 +2,43 @@
 
 All notable changes to claude-obsidian. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [SemVer](https://semver.org/).
 
+## [1.9.3] - 2026-07-29 (the Stop hot-cache reminder can actually fire)
+
+The `Stop` hook that asks for a `wiki/hot.md` refresh has never emitted anything in a normal
+session. Three independent defects, each sufficient on its own; the hook exits 0 in all of them, so
+it looked healthy the entire time.
+
+### Fixed
+
+- **The reminder was a shell syntax error** (`hooks/hooks.json`). An apostrophe in "the vault's
+  declared budget", added in #3, closed its own single-quoted `echo`; `bash -n` on the command
+  string exits 2. Even when the git condition matched, nothing was printed.
+- **The condition could not match** (`hooks/hooks.json`). `git diff --name-only HEAD | grep -q
+  '^wiki/'` reads the working tree, but the `PostToolUse` auto-commit has already committed `wiki/`
+  by the time `Stop` runs, so the tree is clean. With auto-commit disabled it still missed new
+  pages, because `git diff HEAD` does not list untracked files.
+- **A missing `hot.md` read as healthy.** A vault whose hot cache was deleted got no reminder,
+  while `SessionStart` silently injected nothing.
+
+### Added
+
+- **`scripts/hot-cache-stale.sh`** — the `Stop` hook's condition, measured against the commit graph
+  plus the working tree: fires on uncommitted or untracked `wiki/` changes other than `hot.md`, on a
+  commit that touched `wiki/` more recently than `wiki/hot.md`, or on a missing `hot.md`. Silent
+  outside a vault, so global installs stay safe. The reminder text lives in a quoted heredoc, which
+  is what makes the quoting bug above unrepresentable.
+- **`tests/test_hot_cache_hook.sh`** + `make test-hot-cache` (wired into `make test`, now 10 suites).
+  Hermetic — throwaway git repos under `mktemp`, no network. Asserts each staleness case fires and
+  clears, asserts the superseded condition stays silent on the two cases it missed, and runs
+  `bash -n` over **every** command hook in `hooks.json` with a floor on the number of hooks found, so
+  an empty corpus cannot pass as clean.
+
+### Changed
+
+- `hooks/README.md` — the `Stop` row said `prompt`; it has always been `command`. Added a section on
+  how staleness is measured and why the logic lives in a script rather than a JSON-embedded string.
+- `.claude-plugin/plugin.json` + `marketplace.json` version 1.9.2 → 1.9.3.
+
 ## [1.9.2] - 2026-05-27 (prompt-cache hardening + path-handling robustness)
 
 Ports Anthropic prompt-caching best practices into the **one** place the plugin calls the Anthropic API directly: tier-1 contextual-prefix generation in `scripts/contextual-prefix.py`. Verified by full-repo sweep that `cache_control` and the Anthropic API surface exist nowhere else (incl. `claude-canvas/`). No change to retrieval output — API payload shape + observability only.
