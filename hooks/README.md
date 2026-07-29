@@ -9,7 +9,27 @@ Plugin hooks for the claude-obsidian wiki vault. All hooks are defined in `hooks
 | `SessionStart` | command + prompt | Loads `wiki/hot.md` into context. Command type runs `[ -f wiki/hot.md ] && cat wiki/hot.md` as the canonical safety check (works for non-vault sessions without erroring). Prompt type complements with semantic context restoration. Matcher: `startup\|resume`. |
 | `PostCompact` | prompt | Re-loads `wiki/hot.md` after context compaction. Hook-injected context does NOT survive compaction (only `CLAUDE.md` does), so this hook restores the hot cache mid-session. |
 | `PostToolUse` | command | Auto-commits any wiki/ or .raw/ changes after Write or Edit tool calls. Guarded by `[ -d .git ]` so it never errors in non-git directories, and by `git diff --cached --quiet` so it never creates empty commits. |
-| `Stop` | prompt | Updates `wiki/hot.md` at the end of every Claude response with a brief summary of what changed. |
+| `Stop` | command | Asks for a `wiki/hot.md` refresh when the hot cache has fallen behind `wiki/`. Delegates the decision to `scripts/hot-cache-stale.sh`; silent when the cache is level, and silent outside a vault. |
+
+## Stop: measuring hot-cache staleness
+
+The reminder is gated on the **commit graph**, not the working tree. The earlier inline test —
+`git diff --name-only HEAD | grep -q '^wiki/'` — could not fire in a normal session, for two
+independent reasons:
+
+- The `PostToolUse` auto-commit lands `wiki/` changes as soon as they are written, so by the time
+  `Stop` runs the working tree is already clean and the grep matches nothing.
+- `git diff HEAD` never lists untracked files, so a brand-new page was invisible even with
+  auto-commit turned off.
+
+`scripts/hot-cache-stale.sh` fires when `wiki/` has uncommitted or untracked changes other than
+`hot.md` itself, when the newest commit touching `wiki/` is not the newest commit touching
+`wiki/hot.md`, or when `hot.md` is missing entirely.
+
+Keeping the logic in a script rather than a shell string inside JSON is also what prevents the
+quoting bug that broke the previous version: an apostrophe in "the vault's declared budget" closed
+its own single-quoted `echo`, making the whole command a syntax error. `tests/test_hot_cache_hook.sh`
+now runs `bash -n` over every command hook in `hooks.json` so that class of bug cannot return.
 
 ## Known Issue: Plugin Hooks STDOUT Bug
 
