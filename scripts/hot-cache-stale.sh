@@ -21,16 +21,26 @@ set -uo pipefail
 
 cd "${1:-$PWD}" 2>/dev/null || exit 1
 [ -d wiki ] || exit 1
-[ -d .git ] || exit 1
+# Not `[ -d .git ]`: the vault root is not always the repository root. A vault
+# checked in as a subdirectory (wiki-vault/ in a larger repo, say) has no .git of
+# its own, and that test would silently disable the hook for every such install.
+git rev-parse --is-inside-work-tree >/dev/null 2>&1 || exit 1
+
+# Absolute pathspecs, so the probes below mean the same thing whether the vault
+# is the repository root or a subdirectory of it.
+WIKI="$(pwd)/wiki"
 
 # (a) Uncommitted or untracked changes under wiki/, ignoring hot.md itself —
-#     editing hot.md is what clears this state, not what triggers it.
-DIRTY=$(git status --porcelain -- wiki/ 2>/dev/null | grep -v '[[:space:]]wiki/hot\.md$')
+#     editing hot.md is what clears this state, not what triggers it. The
+#     exclusion is a git pathspec rather than a grep over porcelain output,
+#     which is printed relative to the repository root and so does not have a
+#     predictable shape here.
+DIRTY=$(git status --porcelain -- "$WIKI" ":(exclude)$WIKI/hot.md" 2>/dev/null)
 
 # (b) hot.md missed the most recent commit that touched wiki/. This is the
 #     auto-commit case: the page landed in a commit that left hot.md behind.
-LAST_WIKI=$(git log -1 --format=%H -- wiki/ 2>/dev/null)
-LAST_HOT=$(git log -1 --format=%H -- wiki/hot.md 2>/dev/null)
+LAST_WIKI=$(git log -1 --format=%H -- "$WIKI" 2>/dev/null)
+LAST_HOT=$(git log -1 --format=%H -- "$WIKI/hot.md" 2>/dev/null)
 
 # A vault with a wiki/ but no hot.md at all is maximally stale: SessionStart has
 # nothing to inject. Both git probes above agree on the commit that deleted it.
