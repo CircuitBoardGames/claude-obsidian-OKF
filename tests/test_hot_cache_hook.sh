@@ -130,6 +130,52 @@ git -C "$SANDBOX" add -A
 git -C "$SANDBOX" commit -qm "remove hot cache"
 assert_eq "hot.md absent" "fires" "$(verdict)"
 
+# ── the vault is a subdirectory of the repository, not its root ──────────────
+# Installs that check the vault in under a larger repo (wiki-vault/ in a tooling
+# hub, say) have no .git of their own. An earlier `[ -d .git ]` guard made the
+# helper exit 1 unconditionally there — silent in every state, including the
+# ones that must fire.
+SUB=$(mktemp -d /tmp/hot-cache-sub-XXXXXX)
+trap 'rm -rf "$SANDBOX" "$SUB"' EXIT
+git -C "$SUB" init -q
+git -C "$SUB" config user.email test@example.com
+git -C "$SUB" config user.name "Test"
+mkdir -p "$SUB/vault/wiki"
+printf '# Recent Context\n' > "$SUB/vault/wiki/hot.md"
+printf '# Page A\n' > "$SUB/vault/wiki/page-a.md"
+printf '# unrelated\n' > "$SUB/README.md"
+git -C "$SUB" add -A
+git -C "$SUB" commit -qm "seed repo with a nested vault"
+
+sub_verdict() {
+  local out
+  out=$(bash "$STALE_SH" "$SUB/vault" 2>/dev/null)
+  if [ -n "$out" ]; then echo "fires"; else echo "silent"; fi
+}
+
+assert_eq "nested vault, in sync" "silent" "$(sub_verdict)"
+
+printf '# Page B\n' > "$SUB/vault/wiki/page-b.md"
+assert_eq "nested vault, untracked page" "fires" "$(sub_verdict)"
+
+git -C "$SUB" add -A
+git -C "$SUB" commit -qm "wiki: auto-commit"
+assert_eq "nested vault, hot.md left behind" "fires" "$(sub_verdict)"
+
+printf '# Recent Context\n\nPage B added.\n' > "$SUB/vault/wiki/hot.md"
+git -C "$SUB" add -A
+git -C "$SUB" commit -qm "wiki: refresh hot cache"
+assert_eq "nested vault, hot.md caught up" "silent" "$(sub_verdict)"
+
+# A dirty hot.md is not itself staleness — it is the fix in progress. Excluded
+# by pathspec, so this holds regardless of where the vault sits in the repo.
+printf 'still editing\n' >> "$SUB/vault/wiki/hot.md"
+assert_eq "nested vault, only hot.md dirty" "silent" "$(sub_verdict)"
+
+# Changes elsewhere in the repository are not the vault's business.
+printf 'edited\n' >> "$SUB/README.md"
+assert_eq "nested vault, unrelated repo change" "silent" "$(sub_verdict)"
+
 # ── summary ──────────────────────────────────────────────────────────────────
 echo ""
 echo "Pass: $PASS  Fail: $FAIL"

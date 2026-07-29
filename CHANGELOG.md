@@ -19,6 +19,14 @@ it looked healthy the entire time.
   pages, because `git diff HEAD` does not list untracked files.
 - **A missing `hot.md` read as healthy.** A vault whose hot cache was deleted got no reminder,
   while `SessionStart` silently injected nothing.
+- **The helper was inert when the vault is not the repository root.** Its `[ -d .git ]` guard
+  assumed vault root == repo root, so a vault checked in as a subdirectory of a larger repo — the
+  layout the `ClaudeCode` hub uses for `wiki-vault/` — exited 1 in every state, including the ones
+  that must fire. Replaced with `git rev-parse --is-inside-work-tree`, and the working-tree probe
+  now excludes `hot.md` with a `:(exclude)` pathspec on an absolute path rather than a grep over
+  porcelain output, which is printed relative to the repository root and so has no predictable
+  shape in that layout. Without the pathspec, a nested vault reported staleness for an
+  in-progress `hot.md` edit and for unrelated changes elsewhere in the repository.
 
 ### Added
 
@@ -28,7 +36,8 @@ it looked healthy the entire time.
   outside a vault, so global installs stay safe. The reminder text lives in a quoted heredoc, which
   is what makes the quoting bug above unrepresentable.
 - **`tests/test_hot_cache_hook.sh`** + `make test-hot-cache` (wired into `make test`, now 10 suites).
-  Hermetic — throwaway git repos under `mktemp`, no network. Asserts each staleness case fires and
+  Hermetic — throwaway git repos under `mktemp`, no network, 21 assertions across a vault-as-repo-root
+  layout and a vault-as-subdirectory one. Asserts each staleness case fires and
   clears, asserts the superseded condition stays silent on the two cases it missed, and runs
   `bash -n` over **every** command hook in `hooks.json` with a floor on the number of hooks found, so
   an empty corpus cannot pass as clean.
