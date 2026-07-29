@@ -176,6 +176,49 @@ assert_eq "nested vault, only hot.md dirty" "silent" "$(sub_verdict)"
 printf 'edited\n' >> "$SUB/README.md"
 assert_eq "nested vault, unrelated repo change" "silent" "$(sub_verdict)"
 
+# ── the reminder names paths that exist ──────────────────────────────────────
+# The reader acts on this text. It used to hardcode "wiki/hot.md", which is
+# wrong in any vault that is not the repository root, and sent an agent to a
+# path that did not exist. Nothing asserted on the message, so it shipped.
+msg() { bash "$STALE_SH" "$1" 2>/dev/null; }
+
+printf '# Page C\n' > "$SUB/vault/wiki/page-c.md"
+printf 'Budget: 900 words\n' > "$SUB/vault/CLAUDE.md"   # so the policy path is exercised too
+SUB_MSG=$(msg "$SUB/vault")
+assert_eq "nested: reminder names the real hot.md path" "yes" \
+  "$(case "$SUB_MSG" in *"vault/wiki/hot.md"*) echo yes;; *) echo no;; esac)"
+assert_eq "nested: reminder does not say bare wiki/hot.md" "yes" \
+  "$(case "$SUB_MSG" in *" wiki/hot.md"*) echo no;; *) echo yes;; esac)"
+# Every path the reminder names must resolve from the repository root, which is
+# where the reader's cwd is.
+for p in $(printf '%s\n' "$SUB_MSG" | tr ' ' '\n' | grep -E '(hot\.md|CLAUDE\.md)$'); do
+  assert_eq "nested: reminder path '$p' exists from the repo root" "yes" \
+    "$( [ -e "$SUB/$p" ] && echo yes || echo no )"
+done
+
+# At the repository root there is no prefix, so the path is the plain one.
+printf '# Page C\n' > "$SANDBOX/wiki/page-c.md"
+ROOT_MSG=$(msg "$SANDBOX")
+assert_eq "root vault: reminder names wiki/hot.md" "yes" \
+  "$(case "$ROOT_MSG" in *"wiki/hot.md"*) echo yes;; *) echo no;; esac)"
+
+# It must not prescribe a section list: that restates the wiki skill's template
+# and told one vault to re-add a section it had deliberately removed.
+assert_eq "reminder prescribes no section list" "yes" \
+  "$(case "$ROOT_MSG" in *"Key Recent Facts"*|*"Active Threads"*) echo no;; *) echo yes;; esac)"
+
+# A vault with no CLAUDE.md must not cite one.
+NOPOL=$(mktemp -d /tmp/hot-cache-nopol-XXXXXX)
+git -C "$NOPOL" init -q
+git -C "$NOPOL" config user.email test@example.com
+git -C "$NOPOL" config user.name "Test"
+mkdir -p "$NOPOL/wiki"
+printf '# Page A\n' > "$NOPOL/wiki/page-a.md"
+NOPOL_MSG=$(msg "$NOPOL")
+rm -rf "$NOPOL"
+assert_eq "no vault CLAUDE.md: none is cited" "yes" \
+  "$(case "$NOPOL_MSG" in *"CLAUDE.md"*) echo no;; *) echo yes;; esac)"
+
 # ── summary ──────────────────────────────────────────────────────────────────
 echo ""
 echo "Pass: $PASS  Fail: $FAIL"
