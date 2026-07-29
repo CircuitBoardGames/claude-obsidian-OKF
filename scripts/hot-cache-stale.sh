@@ -44,11 +44,29 @@ LAST_HOT=$(git log -1 --format=%H -- "$WIKI/hot.md" 2>/dev/null)
 
 # A vault with a wiki/ but no hot.md at all is maximally stale: SessionStart has
 # nothing to inject. Both git probes above agree on the commit that deleted it.
-if [ -f wiki/hot.md ] && [ -z "$DIRTY" ] && [ "$LAST_WIKI" = "$LAST_HOT" ]; then
+if [ -f "$WIKI/hot.md" ] && [ -z "$DIRTY" ] && [ "$LAST_WIKI" = "$LAST_HOT" ]; then
   exit 1
 fi
 
+# Name the real paths. A hardcoded "wiki/hot.md" is wrong in any vault that is
+# not the repository root, and the reader acts on what this says: it sent one
+# agent to a path that did not exist. `--show-prefix` gives the vault's location
+# relative to the repository root, which is where the reader's cwd is; fall back
+# to the absolute path outside a work tree.
+VAULT=$(git rev-parse --show-prefix 2>/dev/null)          # "" at the repo root
+HOT="${VAULT}wiki/hot.md"
+POLICY="${VAULT}CLAUDE.md"
+[ -f CLAUDE.md ] || POLICY=""
+
+# Deliberately does NOT prescribe a section list. It used to name "Last Updated,
+# Key Recent Facts, Recent Changes, Active Threads", which restates the wiki
+# skill's template and goes wrong the moment a vault diverges from it — telling
+# one vault to re-add the very section it had just removed as duplicated.
+printf 'WIKI_CHANGED: %s is behind its vault. Please rewrite it with a brief, factual summary of what changed, keeping the page structure it already has' "$HOT"
+if [ -n "$POLICY" ]; then
+  printf ' and the hot-cache budget %s declares' "$POLICY"
+fi
 cat <<'REMINDER'
-WIKI_CHANGED: Wiki pages have changed since wiki/hot.md was last updated. Please rewrite wiki/hot.md with a brief summary of what changed, within the hot-cache budget the vault CLAUDE.md declares (default ~500 words). Use the hot cache format: Last Updated, Key Recent Facts, Recent Changes, Active Threads. Keep it factual. Overwrite the file completely. It is a cache, not a journal.
+. Overwrite the file completely. It is a cache, not a journal: what it drops is still in the log and in git.
 REMINDER
 exit 0

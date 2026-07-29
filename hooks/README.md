@@ -31,6 +31,18 @@ quoting bug that broke the previous version: an apostrophe in "the vault's decla
 its own single-quoted `echo`, making the whole command a syntax error. `tests/test_hot_cache_hook.sh`
 now runs `bash -n` over every command hook in `hooks.json` so that class of bug cannot return.
 
+## Stop: what the reminder says
+
+Every path in the reminder is derived from `git rev-parse --show-prefix`, so it resolves from the
+repository root — where the reader's cwd is — in a vault at any depth. A hardcoded `wiki/hot.md`
+sent an agent to a nonexistent file the first time the fixed hook ever fired in a nested vault.
+
+The reminder deliberately does **not** name sections. It used to restate the `wiki` skill's template
+(`Last Updated, Key Recent Facts, Recent Changes, Active Threads`), which duplicates the skill and
+goes wrong as soon as a vault diverges from it — it told a vault that had just deleted
+`Recent Changes` as redundant to add it back. It asks for the page's existing structure instead, and
+cites the vault's `CLAUDE.md` for the budget only when that file exists.
+
 ## Known Issue: Plugin Hooks STDOUT Bug
 
 `anthropics/claude-code#10875` documents that **plugin hook STDOUT may not be captured** by Claude Code, while identical inline hooks in `settings.json` work correctly.

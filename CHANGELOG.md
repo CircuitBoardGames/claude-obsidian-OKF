@@ -19,6 +19,14 @@ it looked healthy the entire time.
   pages, because `git diff HEAD` does not list untracked files.
 - **A missing `hot.md` read as healthy.** A vault whose hot cache was deleted got no reminder,
   while `SessionStart` silently injected nothing.
+- **The reminder named a path that does not exist, and prescribed a section list that undoes
+  curation.** It hardcoded `wiki/hot.md`, wrong in any vault that is not the repository root — it
+  sent an agent to a missing file the first time it ever fired. It also restated the wiki skill's
+  template (`Last Updated, Key Recent Facts, Recent Changes, Active Threads`), which told a vault
+  that had just deleted `Recent Changes` as duplicated to put it back. Paths are now derived from
+  `git rev-parse --show-prefix`, so they resolve from the reader's cwd; the vault's `CLAUDE.md` is
+  cited only when one exists; and the message asks for the page's **existing** structure instead of
+  naming sections. Nothing asserted on the message text before, which is why all of this shipped.
 - **The helper was inert when the vault is not the repository root.** Its `[ -d .git ]` guard
   assumed vault root == repo root, so a vault checked in as a subdirectory of a larger repo — the
   layout the `ClaudeCode` hub uses for `wiki-vault/` — exited 1 in every state, including the ones
@@ -33,10 +41,11 @@ it looked healthy the entire time.
 - **`scripts/hot-cache-stale.sh`** — the `Stop` hook's condition, measured against the commit graph
   plus the working tree: fires on uncommitted or untracked `wiki/` changes other than `hot.md`, on a
   commit that touched `wiki/` more recently than `wiki/hot.md`, or on a missing `hot.md`. Silent
-  outside a vault, so global installs stay safe. The reminder text lives in a quoted heredoc, which
-  is what makes the quoting bug above unrepresentable.
+  outside a vault, so global installs stay safe. The reminder text is a single-quoted `printf`
+  format plus a quoted heredoc, never an interpolated shell string, which is what makes the quoting
+  bug above unrepresentable.
 - **`tests/test_hot_cache_hook.sh`** + `make test-hot-cache` (wired into `make test`, now 10 suites).
-  Hermetic — throwaway git repos under `mktemp`, no network, 21 assertions across a vault-as-repo-root
+  Hermetic — throwaway git repos under `mktemp`, no network, 28 assertions across a vault-as-repo-root
   layout and a vault-as-subdirectory one. Asserts each staleness case fires and
   clears, asserts the superseded condition stays silent on the two cases it missed, and runs
   `bash -n` over **every** command hook in `hooks.json` with a floor on the number of hooks found, so
