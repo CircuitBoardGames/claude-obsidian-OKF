@@ -1,93 +1,86 @@
 ---
 name: wiki-fold
+<<<<<<< HEAD
 description: "Rollup of wiki log entries into meta-pages. Reads the oldest 2^k entries no earlier fold has covered, writes a structurally-idempotent fold page to wiki/folds/ that links back to children. Extractive summarization (no invention). Dry-run by default, stdout-only; commit mode writes and accepts that the PostToolUse hook auto-commits. Triggers on: fold the log, run a fold, run wiki-fold, log rollup, roll up log entries."
+=======
+description: "Create a bounded, extractive, structurally idempotent rollup of recent Obsidian wiki log entries, with dry-run preview by default and one optional transaction apply. Use for manual log compression without modifying child pages. Triggers: fold the log, run a fold, run wiki-fold, log rollup, roll up log entries, commit the fold."
+>>>>>>> 1c1bc49c03a685ee8f5d09c99efe52b42d6673f5
 ---
 
-# wiki-fold: Extractive Log Rollup
+# Extractive log fold
 
-Implements a bounded subset of Mechanism 1 from [[DragonScale Memory]]: flat fold over raw `wiki/log.md` entries. Fold-of-folds (hierarchical level-stacking) is **out of scope for this skill**; see "Scope boundary" below.
+Create an additive rollup of raw `wiki/log.md` entries. Never modify, move, or
+delete child entries or their pages. Do not perform fold-of-folds or trigger a
+fold automatically.
 
-A fold is **additive**: child log entries and their referenced pages are never modified, moved, or deleted. A fold is **extractive**: every outcome and theme in the output must be traceable to a specific child log entry. No invented facts, no synthesis beyond what the child entries support.
-
----
-
-## Scope boundary (explicit)
-
-This skill does **not** implement:
-- Fold-of-folds / hierarchical level stacking (DragonScale spec calls for it; deferred to a future skill).
-- Automatic triggering (folds are always human-invoked in Phase 1).
-- Semantic-tiling dedup (Mechanism 3; separate skill).
-
-It **does** implement:
-- Flat fold over raw log.md entries at a chosen batch exponent `k`.
-- Structural idempotency via a deterministic fold ID.
-- Extractive summarization with count-checking.
-
-When referring to level in frontmatter, use `batch_exponent: k` (not `level: k`), because this skill does not produce hierarchical levels.
-
----
-
-## Modes
-
-| Mode | Writes? | Invocation |
-|---|---|---|
-| **dry-run (default)** | **No Write tool calls.** Emit fold content via Bash `cat`/`heredoc` to stdout only. | `fold the log, dry-run k=3` |
-| **commit** | Uses Write/Edit tools. Each Write fires the repo PostToolUse hook which auto-commits wiki changes. Accept this. Compose full content first, then sequence writes. | `fold the log, commit k=3` (only after a clean dry-run) |
-
-**Why stdout-only in dry-run**: the repo's `hooks/hooks.json` PostToolUse hook fires on any `Write|Edit` and runs `git add wiki/ .raw/`. Writing to `/tmp` does not stage /tmp, but it still triggers the hook, which will commit *any pending wiki changes* under a generic message. Dry-run must leave zero residue. Bash stdout does not fire the hook.
-
----
-
-## Concurrency (v1.7+)
-
-The fold-page write in commit mode MUST be preceded by `wiki-lock acquire`:
+Resolve the portable core from this skill's installation. Resolve the user vault
+by explicit `--vault`, `CLAUDE_OBSIDIAN_VAULT`, workspace config, then
+current-directory discovery. Never treat the plugin/product root as a vault.
 
 ```bash
-FOLD_PATH="wiki/folds/${FOLD_ID}.md"
-bash scripts/wiki-lock.sh acquire "$FOLD_PATH" || {
-  echo "FAIL: another writer holds $FOLD_PATH; aborting fold."; exit 75
-}
-# … write the fold via Write/Edit (which fires the PostToolUse hook) …
-bash scripts/wiki-lock.sh release "$FOLD_PATH"
+PRODUCT_ROOT=/absolute/path/to/installed/claude-obsidian
+CORE="$PRODUCT_ROOT/scripts/claude-obsidian.py"
+test -f "$CORE"
 ```
 
-Fold pages are deterministically named (`fold-k{K}-from-{DATE}-to-{DATE}-n{COUNT}.md`), so two parallel folds with the same parameters target the same path. Without the lock, they could overwrite each other's outputs. The duplicate-detection check inside this skill (already documented below) handles the "fold already exists" case at the SKILL level; the lock handles the in-flight-write race at the OS level.
+This skill needs no network egress. Do not call external services.
 
-Dry-run mode does not acquire a lock (no writes happen).
+## Select a bounded range
 
-See `skills/wiki-ingest/SKILL.md` §Concurrency for the full lock semantics.
+Use batch exponent `k` with size `2^k`; default to `k=4`. An explicit entry range
+may override it. If fewer entries exist than requested, report the shortfall and
+stop rather than folding a partial batch.
 
----
+Read the selected log entries completely. Read referenced child pages only when
+the log lacks enough context: target 0-10 reads, hard ceiling 15. Missing pages
+remain explicit `page_missing` records.
 
-## Deterministic fold ID
+Derive the structural ID only from inputs:
 
-Every fold has an ID derived from its inputs:
-
-```
+```text
 fold-k{K}-from-{EARLIEST-DATE}-to-{LATEST-DATE}-n{COUNT}
 ```
 
-Example: `fold-k3-from-2026-04-10-to-2026-04-23-n8`.
+If `wiki/folds/{FOLD_ID}.md` already exists, return a no-op. Replacing it requires
+an explicit force request and a separately reviewed `replace` proposal.
 
-The filename in commit mode is `wiki/folds/{FOLD-ID}.md`. No date-of-creation in the filename. No timestamp in the title.
+## Draft extractively
 
-**Duplicate detection (required)**: before emitting any output, check if `wiki/folds/{FOLD-ID}.md` already exists. If so, report "Fold already exists at wiki/folds/{FOLD-ID}.md. Use --force to overwrite, or pick a different range." and stop. This is the no-op idempotency guarantee; byte-identical content is NOT guaranteed (LLM prose varies) but the filename and scope are.
+Follow [fold-template.md](references/fold-template.md). Every child log entry must
+have one deterministic `child_key` in frontmatter and exactly one matching row
+in the Child Entries table. Do not deduplicate children by page, although the
+final Child Pages link list may be deduplicated.
 
----
+Every outcome must name its source entry. Every number must be verifiable in the
+selected entry. A cross-entry theme must name at least two contributing entries.
+Prefer `ambiguous in source` or `source missing` to invention. When a child page
+and log entry disagree, preserve both and identify the mismatch; the log entry is
+the fold's primary source.
 
-## Parameters
+Run these checks before proposing any write:
 
-- `k` (default 4): batch exponent. Batch size = `2^k`. Typical values: k=3 (8), k=4 (16), k=5 (32).
-- `range` (optional): explicit entry range `entries 1-16`. Overrides k.
-- `--force`: overwrite an existing fold with the same ID. Default no.
-- `--commit`: write to wiki/. Without it, dry-run stdout-only.
+- deterministic ID and exact entry count;
+- frontmatter/table bijection;
+- numeric traceability;
+- source citation for every outcome and theme;
+- no change to a child, source, source ledger, or claim ledger.
 
+<<<<<<< HEAD
 If fewer than `2^k` **uncovered** log entries exist, report the shortfall and stop. Do not silently fold a partial batch.
+=======
+A fold adds no new factual evidence, so it does not upgrade claim assessments or
+create source records. Report discovered contradictions for later review instead
+of editing canonical claims.
+>>>>>>> 1c1bc49c03a685ee8f5d09c99efe52b42d6673f5
 
----
+## Preview by default
 
-## Procedure
+Return the complete fold draft, ID, child range, read budget, and proposed changed
+paths without modifying the vault. Parallel agents may check child entries and
+return extracts, but only the orchestrator assembles the fold; workers never
+write.
 
+<<<<<<< HEAD
 ### 1. Parse log entries — and subtract what earlier folds already cover
 
 **A fold is additive, so the newest entries are the ones the previous fold already folded.** Children stay in `log.md`; nothing is moved or deleted. Taking `head -{2^k}` is therefore correct only for a vault's FIRST fold. On the second run it re-folds the same entries, producing two fold pages that claim the same children.
@@ -112,24 +105,40 @@ From the uncovered set, take the **oldest contiguous run** of `2^k` entries. Old
 Sanity check before proceeding: `covered + uncovered` must equal the total heading count minus the fold entries. If it does not, a fold's `children[].title` has drifted from its heading and coverage is being under-counted — fix the fold page before folding anything new.
 
 Record for each selected entry: line number, date, operation, title, and the following bullet lines until the next `## [` or end-of-section.
+=======
+When the user explicitly says to apply or commit the fold, build one
+`claude-obsidian.transaction.v1` bundle with `operation_type: fold`. Read
+[the transaction contract](../wiki/references/operation-transactions.md). Couple:
 
-### 2. Extract child page identifiers
+- `wiki/folds/{FOLD_ID}.md` in `create` mode by default;
+- the fold catalog entry in `wiki/index.md`;
+- one new top-of-file fold entry in `wiki/log.md`.
 
-From each entry's bullet list, extract:
-- `Location: wiki/path/to/page.md` (the primary page)
-- `[[Wikilinks]]` inline
-- `Pages created:` and `Pages updated:` lists
+Do not update `wiki/hot.md`. Record SHA-256 preconditions for all three targets.
+Do not use host Write/Edit, Obsidian transport writes, deprecated locks, automatic
+commits, or one apply per file.
 
-Build a structured children list:
-```yaml
-children:
-  - date: "2026-04-23"
-    op: "save"
-    title: "DragonScale Memory v0.2 — post-adversarial-review"
-    page: "[[DragonScale Memory]]"
-  - ...
+Inspect before the single apply:
+
+```bash
+python3 "$CORE" transaction inspect /path/to/fold-bundle.json --vault /path/to/vault
+# Set APPROVAL_SHA256 to the inspect result's approval_sha256 after review.
+python3 "$CORE" transaction apply /path/to/fold-bundle.json --vault /path/to/vault \
+  --approved-plan-sha256 "$APPROVAL_SHA256"
 ```
 
+Report the operation ID and exact changed paths. The identical bundle and ID are
+idempotent. On exit 75, re-read and rebuild; after interruption, use
+`transaction recover`.
+>>>>>>> 1c1bc49c03a685ee8f5d09c99efe52b42d6673f5
+
+Git history is a separate optional action:
+
+```bash
+python3 "$CORE" checkpoint OPERATION_ID --vault /path/to/vault
+```
+
+<<<<<<< HEAD
 One record per log entry. Do not dedupe by page: if two entries both point to `[[DragonScale Memory]]`, both records appear, distinguishable by date and title.
 
 ### 3. Read referenced pages (bounded)
@@ -248,3 +257,7 @@ When working on this skill, apply the 10-principle loop. See [`skills/think/SKIL
 | 8 | ACCEPT | Dry-run first. Commit only when the self-check passes. Honor the bounded-scope constraint (no fold-of-folds yet). |
 | 9 | CREATE | Fold page at `wiki/folds/<fold-id>.md` linking to all child entries. |
 | 10 | GROW | Fold-of-folds (hierarchical level-stacking) is v_next scope — note as you encounter it, don't sneak it in. |
+=======
+Observe all selected entries, verify traceability and counts, then grow the
+rollup only from what its children actually say.
+>>>>>>> 1c1bc49c03a685ee8f5d09c99efe52b42d6673f5
