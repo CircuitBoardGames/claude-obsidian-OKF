@@ -1,15 +1,15 @@
 ---
 type: project
 title: "{{title}}"
+timestamp: "{{date}}T00:00:00"
 description: "Replace with a one-sentence summary."
 status: active
-created: "{{date}}"
-timestamp: "{{date}}T00:00:00"
+created: {{date}}
+updated: {{date}}
 deadline: ""
 outcome: ""
 tags:
   - project
-related_areas: []
 ---
 
 # {{title}}

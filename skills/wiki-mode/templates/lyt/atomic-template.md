@@ -2,12 +2,14 @@
 type: note
 title: "{{title}}"
 description: "Replace with a one-sentence summary."
-created: "{{date}}"
 timestamp: "{{date}}T00:00:00"
-tags: []
+status: seed
+created: {{date}}
+updated: {{date}}
+tags:
+  - note
 mocs:
   - "[[{{primary-moc}}]]"
-related: []
 ---
 
 # {{title}}

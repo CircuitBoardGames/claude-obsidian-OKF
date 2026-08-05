@@ -2,12 +2,13 @@
 type: area
 title: "{{title}}"
 description: "Replace with a one-sentence summary."
-created: "{{date}}"
 timestamp: "{{date}}T00:00:00"
+status: active
+created: {{date}}
+updated: {{date}}
 review_cadence: weekly
 tags:
   - area
-related_projects: []
 ---
 
 # {{title}}
