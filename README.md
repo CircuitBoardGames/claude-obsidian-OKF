@@ -698,3 +698,4 @@ MIT License. See [LICENSE](LICENSE) for full text. Free for personal and commerc
 ---
 
 *Based on [Andrej Karpathy's LLM Wiki pattern](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f). Original plugin built by [Agrici Daniel](https://agricidaniel.com/about); this OKF fork maintained by [CircuitBoardGames](https://github.com/CircuitBoardGames). Compounding knowledge is the highest-leverage habit a thinking person can build.*
+
