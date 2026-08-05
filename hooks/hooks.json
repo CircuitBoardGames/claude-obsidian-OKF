@@ -22,9 +22,6 @@
         "hooks": [
           {
             "type": "command",
-<<<<<<< HEAD
-            "command": "[ -x scripts/hot-cache-stale.sh ] && bash scripts/hot-cache-stale.sh || true"
-=======
             "command": "python3",
             "args": [
               "${CLAUDE_PLUGIN_ROOT}/scripts/claude-obsidian.py",
@@ -32,7 +29,6 @@
               "stop"
             ],
             "timeout": 5
->>>>>>> 1c1bc49c03a685ee8f5d09c99efe52b42d6673f5
           }
         ]
       }

@@ -7,12 +7,8 @@ Every fold is extractive, deterministic, and uses flat Obsidian properties.
 ```yaml
 ---
 type: fold
-<<<<<<< HEAD
-title: "Fold k{K} — {EARLIEST-DATE} to {LATEST-DATE} — n{COUNT}"
-description: "Rollup of {COUNT} log entries from {EARLIEST-DATE} to {LATEST-DATE}."
-=======
 title: "Fold k{K} from {EARLIEST-DATE} to {LATEST-DATE}, n={COUNT}"
->>>>>>> 1c1bc49c03a685ee8f5d09c99efe52b42d6673f5
+description: "Extractive fold of {COUNT} log entries from {EARLIEST-DATE} to {LATEST-DATE}."
 fold_id: "fold-k{K}-from-{EARLIEST-DATE}-to-{LATEST-DATE}-n{COUNT}"
 batch_exponent: {K}
 entry_count: {COUNT}

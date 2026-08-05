@@ -82,49 +82,11 @@ per-worker mutations for these vault changes.
 
 ## Preview and apply
 
-<<<<<<< HEAD
-1. **Scan** the current conversation. Identify the most valuable content to preserve.
-2. **Ask** (if not already named): "What should I call this note?" Keep the name short and descriptive.
-3. **Determine** note type using the table above.
-4. **Extract** all relevant content from the conversation. Rewrite it in declarative present tense (not "the user asked" but the actual content itself).
-5. **Create** the note in `<destination-root>/<chosen-folder>/<title>.md` (per Step 0). Full frontmatter. If a note with the same path already exists, ASK before overwriting.
-6. **Collect links**: identify any wiki pages mentioned in the conversation. Add them to `related` in frontmatter.
-7. **Update** `wiki/index.md`. Add the new entry at the top of the relevant section.
-8. **Append** to `wiki/log.md` (OKF §7 format — date-only heading, newest first). If the topmost `## ` heading is already today's `YYYY-MM-DD`, add the bullet under it; otherwise insert a new `## YYYY-MM-DD` heading above the previous one:
-   ```
-   ## YYYY-MM-DD
-   * **save**: Note Title — Type: [note type]; Location: wiki/[folder]/Note Title.md; From: conversation on [brief topic description]
-   ```
-9. **Update** `wiki/hot.md` to reflect the new addition.
-10. **Confirm**: "Saved as [[Note Title]] in wiki/[folder]/."
-
----
-
-## Frontmatter Template
-
-```yaml
----
-type: <synthesis|concept|source|decision|session>
-title: "Note Title"
-description: "One-sentence summary of this note."
-created: YYYY-MM-DD
-updated: YYYY-MM-DD
-timestamp: YYYY-MM-DDTHH:MM:SS
-tags:
-  - <relevant-tag>
-status: developing
-related:
-  - "[[Any Wiki Page Mentioned]]"
-sources:
-  - "[[.raw/source-if-applicable.md]]"
----
-=======
 ```bash
 python3 "$CORE" transaction inspect /path/to/save-bundle.json --vault /path/to/vault
 # Set APPROVAL_SHA256 to the inspect result's approval_sha256 after review.
 python3 "$CORE" transaction apply /path/to/save-bundle.json --vault /path/to/vault \
   --approved-plan-sha256 "$APPROVAL_SHA256"
->>>>>>> 1c1bc49c03a685ee8f5d09c99efe52b42d6673f5
 ```
 
 Show the note title, destination, create/replace modes, and changed paths after

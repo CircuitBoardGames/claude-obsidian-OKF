@@ -1,32 +1,5 @@
 # claude-obsidian deterministic developer entry points.
 
-<<<<<<< HEAD
-.PHONY: test test-address test-tiling test-boundary test-bm25 test-retrieve \
-        test-lock test-concurrent test-mode test-contextual test-hot-cache \
-        setup-dragonscale setup-retrieve setup-mode clean-test-state help
-
-help:
-	@echo "claude-obsidian developer targets:"
-	@echo "  make test              Run all v1.7 tests (DragonScale + retrieval + concurrency)"
-	@echo "  make test-address     scripts/allocate-address.sh tests (shell)"
-	@echo "  make test-tiling      scripts/tiling-check.py tests (python, no ollama required)"
-	@echo "  make test-boundary    scripts/boundary-score.py tests (python, no prereqs)"
-	@echo "  make test-bm25        scripts/bm25-index.py tests (python, hermetic)"
-	@echo "  make test-retrieve    scripts/retrieve.py + rerank.py tests (python, hermetic)"
-	@echo "  make test-lock        scripts/wiki-lock.sh tests (shell, hermetic)"
-	@echo "  make test-concurrent  multi-writer correctness gate (shell, hermetic)"
-	@echo "  make test-mode        scripts/wiki-mode.py tests (python, hermetic)"
-	@echo "  make test-contextual  scripts/contextual-prefix.py cache-floor tests (python, hermetic)"
-	@echo "  make test-hot-cache   scripts/hot-cache-stale.sh + hooks.json shell validity (shell, hermetic)"
-	@echo "  make setup-dragonscale Run bin/setup-dragonscale.sh against this vault"
-	@echo "  make setup-retrieve   Run bin/setup-retrieve.sh against this vault (opt-in v1.7)"
-	@echo "  make setup-mode       Run bin/setup-mode.sh to pick a methodology mode (opt-in v1.8)"
-	@echo "  make clean-test-state Remove runtime lockfiles and tiling/embed caches"
-
-test: test-address test-tiling test-boundary test-bm25 test-retrieve test-lock test-concurrent test-mode test-contextual test-hot-cache
-	@echo ""
-	@echo "All tests passed."
-=======
 PYTHON ?= python3
 export PYTHONDONTWRITEBYTECODE := 1
 
@@ -45,7 +18,6 @@ help:
 
 test: test-python test-shell test-contracts test-package
 	@echo "All hermetic tests and executable contracts passed."
->>>>>>> 1c1bc49c03a685ee8f5d09c99efe52b42d6673f5
 
 test-python:
 	@set -eu; for test_file in tests/test_*.py; do \
