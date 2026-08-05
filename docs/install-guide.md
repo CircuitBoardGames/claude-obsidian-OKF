@@ -23,8 +23,8 @@ for development, but a normal user vault should be a separate directory.
 Add the artifact-clean public catalog and install the namespaced plugin:
 
 ```bash
-claude plugin marketplace add AgriciDaniel/claude-obsidian
-claude plugin install claude-obsidian@agricidaniel-claude-obsidian
+claude plugin marketplace add CircuitBoardGames/claude-obsidian-OKF
+claude plugin install claude-obsidian@circuitboardgames-claude-obsidian-okf
 claude plugin list
 ```
 
@@ -243,8 +243,8 @@ from its vault-local pending record.
 Remove the host integration, not the vault:
 
 ```bash
-claude plugin uninstall claude-obsidian@agricidaniel-claude-obsidian
-claude plugin marketplace remove agricidaniel-claude-obsidian
+claude plugin uninstall claude-obsidian@circuitboardgames-claude-obsidian-okf
+claude plugin marketplace remove circuitboardgames-claude-obsidian-okf
 ```
 
 For portable hosts, remove only the per-skill links that the installer reported.
