@@ -25,6 +25,14 @@ status: mature
 child_keys:
   - "log-{YYYYMMDD}-001"
   - "log-{YYYYMMDD}-002"
+children:
+  - key: "log-{YYYYMMDD}-001"
+    date: "{YYYY-MM-DD}"
+    op: "{save|ingest|fold|session|setup|decision}"
+    title: "{log entry heading, VERBATIM}"
+    page: "[[{canonical page wikilink}]]"
+    page_missing: false
+  # ... one record per log entry, same order as child_keys. No dedupe by page.
 related:
   - "[[log]]"
   - "[[index]]"
@@ -32,7 +40,14 @@ related:
 ```
 
 Generate each `child_key` from the entry date plus its one-based position in the
-selected oldest-to-newest range. The same key appears in exactly one body row.
+selected oldest-to-newest range.
+
+`child_keys` and `children` are both required and serve different readers.
+`child_keys` is the flat bijection key the validation below counts. `children` is the
+**coverage record**: the next fold subtracts already-covered entries by matching each
+`children[].title` against the log's headings, so that title must be the heading
+**verbatim**. A paraphrase there is not cosmetic — it makes the entry read as
+uncovered and the next run folds it a second time. The same key appears in exactly one body row.
 This avoids nested YAML objects while preserving a frontmatter/table bijection.
 The deterministic `fold_id` matches the filename. Missing any required property
 is a dry-run failure.
@@ -115,6 +130,8 @@ the Child Entries table is not.
 ## Validation
 
 - `entry_count`, `child_keys`, and table rows have equal counts.
+- `children` has the same count and order as `child_keys`, and every `children[].title`
+  matches a real `log.md` heading **verbatim** — the coverage check depends on it.
 - Every child key is unique and appears exactly twice: frontmatter and one row.
 - Every numeric statement is traceable to its cited child.
 - Every theme cites at least two children.

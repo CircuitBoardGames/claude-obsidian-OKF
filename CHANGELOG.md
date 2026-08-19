@@ -5,6 +5,18 @@ Notable changes to claude-obsidian are recorded here using
 [Semantic Versioning](https://semver.org/). Git history retains the detailed
 implementation record for older releases.
 
+## Unreleased
+
+### Fixed
+
+- `wiki-fold` subtracts existing fold coverage again, and the fold template carries the
+  `children[]` record that coverage matches on. Both were introduced in #2 and were lost in the
+  v2.1.0 upstream resolution (3a558b6d), which adopted upstream's rewritten skill wholesale — a
+  modify/delete-shaped loss that leaves no conflict marker. Without them the skill takes the newest
+  `2^k` entries, which after a vault's first fold are precisely the entries the previous fold already
+  covered, producing two fold pages claiming the same children. Downstream had been compensating with
+  an out-of-tree planner script; that is no longer required.
+
 ## [Unreleased]
 
 ### Added
