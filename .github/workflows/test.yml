@@ -1,3 +1,27 @@
+# RUNS ON A SELF-HOSTED DEBIAN RUNNER, NOT GITHUB'S HOSTED IMAGES.
+#
+# This fork's CI is executed by the CircuitBoardGames Forgejo runner (Debian 13, one machine). The
+# workflow it inherited was written for GitHub's hosted fleet and could not pass here at all:
+#
+#   * `actions/setup-python` failed every Ubuntu job before a single test ran --
+#     `The version '3.11' with architecture 'x64' was not found for Debian 13` -- because that
+#     action resolves against a manifest of prebuilt images this runner does not use.
+#   * `macos-latest` and `windows-latest` have no runner, so those jobs sat PENDING for ever. A job
+#     that can never complete is worse than one that fails: the PR simply never goes green, and
+#     nothing says why.
+#
+# A gate that cannot pass is as useless as one that cannot fail, and it is the same defect wearing
+# the opposite sign. Fixed against what demonstrably passes on this runner rather than against a
+# guess: the consuming repo's own workflows use the system interpreter and `uv`, and use
+# `setup-python` NOWHERE.
+#
+# WHAT THIS COSTS, STATED RATHER THAN HIDDEN. The Python version matrix and the macOS/Windows
+# surfaces are GONE here. They are not lost -- they belong to upstream's GitHub CI, which runs on
+# the fleet that can serve them. This fork's gate now answers one narrower question honestly: does
+# the hermetic suite pass on the interpreter this fork is actually vendored and run against?
+# Re-adding a matrix here needs interpreters the runner can supply, which was not verified from an
+# Alpine box and must not be assumed.
+
 name: Hermetic verification
 
 on:
@@ -16,13 +40,8 @@ concurrency:
 
 jobs:
   test:
-    name: ${{ matrix.os }} / Python ${{ matrix.python }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, macos-latest]
-        python: ['3.11', '3.12', '3.13', '3.14']
-    runs-on: ${{ matrix.os }}
+    name: hermetic suite (self-hosted Debian, system Python)
+    runs-on: ubuntu-latest
     timeout-minutes: 12
     env:
       PYTHONDONTWRITEBYTECODE: '1'
@@ -31,11 +50,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
-      - name: Set up Python
-        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
-        with:
-          python-version: ${{ matrix.python }}
-
+      # NO setup-python. It is what broke every Ubuntu job here, and the runner already carries a
+      # system interpreter -- the same one this fork is vendored against and run with in practice.
       - name: Show runtime versions
         run: |
           python3 --version
@@ -49,61 +65,10 @@ jobs:
           git diff --exit-code
           test -z "$(git status --porcelain=v1 --untracked-files=all)"
 
-  windows-smoke:
-    # The full suite exercises dirfd confinement, symlinks, fcntl, and bash —
-    # deliberately unsupported on native Windows.  This job runs the portable
-    # surface (schema/package/contract validation plus the Windows
-    # compatibility suite) as an explicit allowlist so a skip can never be
-    # mistaken for a pass.
-    name: windows-latest / Python 3.12 (portable surface)
-    runs-on: windows-latest
-    timeout-minutes: 10
-    env:
-      PYTHONDONTWRITEBYTECODE: '1'
-    defaults:
-      run:
-        shell: bash
-
-    steps:
-      - name: Disable line-ending translation before checkout
-        # The runner image ships autocrlf=true globally; frontmatter parsing
-        # and content hashing require byte-exact LF checkouts.  Must run
-        # before actions/checkout writes any file.
-        run: git config --global core.autocrlf false
-
-      - name: Checkout
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-
-      - name: Set up Python
-        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
-        with:
-          python-version: '3.12'
-
-      - name: Show runtime versions
-        run: python --version
-
-      - name: Run portable-surface tests
-        run: |
-          set -eu
-          for test_file in \
-            tests/test_package_validation.py \
-            tests/test_knowledge_contracts.py \
-            tests/test_contracts.py \
-            tests/test_benchmark_tools.py \
-            tests/test_windows_compat.py; do
-            echo "=== $test_file ==="
-            python "$test_file"
-          done
-
-      - name: Run portable validators
-        run: |
-          python scripts/claude-obsidian.py package validate
-          python scripts/claude-obsidian.py contracts --check-only
-
-      - name: Prove tests did not mutate or create product files
-        run: |
-          git diff --exit-code
-          test -z "$(git status --porcelain=v1 --untracked-files=all)"
+  # windows-smoke: REMOVED, not skipped. There is no windows-latest runner here, so the job sat
+  # PENDING for ever and the PR could never go green. Upstream's GitHub CI still runs the portable
+  # surface on Windows; deleting it here loses no coverage that this runner could ever have
+  # provided, and it stops a permanently-pending job from masquerading as work in progress.
 
   release-safety:
     name: Reproducible release artifact
@@ -117,11 +82,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
-      - name: Set up Python
-        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
-        with:
-          python-version: '3.11'
-
+      # NO setup-python, for the reason given at the top of this file.
       - name: Build and audit the public artifact twice
         run: |
           python3 scripts/claude-obsidian.py release build --output "$RUNNER_TEMP/first.zip"

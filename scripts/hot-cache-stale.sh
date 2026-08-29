@@ -48,6 +48,40 @@ if [ -f "$WIKI/hot.md" ] && [ -z "$DIRTY" ] && [ "$LAST_WIKI" = "$LAST_HOT" ]; t
   exit 1
 fi
 
+# THE HOT CACHE MAY LIVE OUTSIDE THE REPOSITORY, and this check cannot see it there.
+#
+# An installation can keep its hot cache somewhere git does not track -- a forge wiki, an external
+# store -- in which case `hot.md` is legitimately absent and the probes above are measuring nothing:
+# `LAST_HOT` is empty for a file that is not in the history, so the condition can never be satisfied
+# and this hook fires on EVERY session, telling the reader to rewrite a path that does not exist.
+# That is the failure this script's own header warns about one case earlier ("it sent one agent to a
+# path that did not exist"), reached by a different route.
+#
+# Two states, deliberately distinguished, because collapsing them is the bug:
+#
+#   HOT_CACHE_EXTERNAL set  -> the operator has SAID the cache is elsewhere. Exit quiet. This is an
+#                              explicit opt-out, not a silent absence: something had to be set for
+#                              it, and that is the difference between a disabled check and a broken
+#                              one.
+#   hot.md merely missing   -> say EXACTLY that, and say this check cannot measure a cache it cannot
+#                              see. Do NOT emit the "rewrite it" reminder, which names a path the
+#                              reader would then create -- resurrecting a file the vault may have
+#                              moved on purpose.
+if [ ! -f "$WIKI/hot.md" ]; then
+  if [ -n "${HOT_CACHE_EXTERNAL:-}" ]; then
+    exit 1
+  fi
+  VAULT_P=$(git rev-parse --show-prefix 2>/dev/null)
+  printf 'WIKI_CHANGED: %swiki/hot.md is ABSENT from this vault, so its freshness cannot be measured here.\n' "$VAULT_P"
+  cat <<'ABSENT'
+If this vault keeps its hot cache outside the repository (a forge wiki, say), set
+HOT_CACHE_EXTERNAL=1 to retire this check deliberately -- otherwise it reports stale on every
+session and nothing you write in the vault can satisfy it. If the file was deleted by accident,
+restore it. This hook is NOT asking you to recreate the page.
+ABSENT
+  exit 0
+fi
+
 # Name the real paths. A hardcoded "wiki/hot.md" is wrong in any vault that is
 # not the repository root, and the reader acts on what this says: it sent one
 # agent to a path that did not exist. `--show-prefix` gives the vault's location
