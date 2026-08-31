@@ -19,11 +19,29 @@ implementation record for older releases.
 
 ## [Unreleased]
 
+### Fixed
+
+- `stop_status` now reads transaction journals up to the package's existing
+  8 MiB runtime JSON bound, so large valid journals are not misreported as
+  unreadable. Unsafe or unreadable journals now require manual inspection, and
+  recovery advice is scoped to journals with a recognized recoverable state.
+- `checkpoint` now honors Git's false values for `core.filemode`. Git ignores
+  working-tree executable-bit differences in that mode, so checkpoint keeps
+  strict content verification while skipping executable-mode comparison.
+- Anthropic contextual-prefix responses now have a 256 KiB read cap in addition
+  to the existing timeout, preventing an oversized response from consuming
+  unbounded memory. Response-body read failures, invalid UTF-8, excessive JSON
+  nesting, and malformed response shapes fail closed.
+
+## [2.1.1] - 2026-08-26
+
+Legacy migration safety and clearer Windows and WSL support guidance.
+
 ### Added
 
 - `docs/windows-wsl.md`: platform support matrix and WSL troubleshooting for
-  native Windows users, covering the virtualization-conflict hang class
-  (`wsl --status` hanging after install), approval-hash environment binding,
+  native Windows users, covering Microsoft's diagnostic flow for unconfirmed
+  `wsl --status` hangs, approval-hash environment binding,
   and filesystem identity requirements. Linked from the README, install
   guide, compound vault guide, and the wiki skill's transaction reference.
 
@@ -31,6 +49,21 @@ implementation record for older releases.
 
 - The `UNSUPPORTED_PLATFORM` refusal message now points to
   `docs/windows-wsl.md` for users whose WSL setup is itself misbehaving.
+- Windows and WSL troubleshooting now routes unconfirmed hangs through
+  Microsoft's diagnostic flow without asserting an unsupported cause.
+
+### Fixed
+
+- Legacy migration and adoption no longer fail when a manifest source key is a
+  valid batch label rather than a file. Unresolved labels are preserved as
+  unreviewed manual sources without inventing payload mappings or hashes.
+  Apply now rejects a reviewed migration if a legacy locator's file state
+  changes or becomes unsafe before the transaction writes.
+- Migration and adoption keep read-only source observations separate from the
+  1,024-write recovery limit, preserving valid legacy manifests with larger
+  source sets.
+- Git-backed release and checkpoint fixtures now ignore machine-wide hooks and
+  commit-signing settings, keeping the hermetic suite offline and deterministic.
 
 ## [2.1.0] - 2026-07-31
 
