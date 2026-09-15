@@ -25,8 +25,7 @@
 name: Hermetic verification
 
 on:
-  push:
-    branches: [main]
+  # No `push:` -- CI is preventative only, nothing runs after a merge (operator, 2026-09-15).
   pull_request:
     branches: [main]
   workflow_dispatch:
