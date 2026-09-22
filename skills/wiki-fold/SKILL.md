@@ -23,9 +23,32 @@ This skill needs no network egress. Do not call external services.
 
 ## Select a bounded range
 
+**Subtract what earlier folds already cover before selecting anything.** A fold is
+additive — children stay in `log.md` — so the newest `2^k` entries are exactly the
+ones the previous fold already folded. Taking the newest is correct only for a
+vault's FIRST fold; on every run after it re-folds the same entries and produces two
+fold pages claiming the same children.
+
+An entry is **covered** when its heading title appears as a `children[].title` in any
+`wiki/folds/*.md`. Titles are compared **verbatim**: a paraphrased title fails to
+match, its children read as uncovered, and the next run re-folds them — which is why
+the template requires the heading verbatim. A fold's own log entry is bookkeeping,
+not a foldable entry; exclude it.
+
+From the uncovered set take the **oldest contiguous run** of `2^k`. Oldest, because a
+rollup should compress history and leave recent entries readable in the raw log.
+Contiguous, because successive folds then tile the log and any position belongs to at
+most one fold.
+
+**Cross-check before proceeding:** covered + uncovered must equal the total heading
+count minus fold entries. If it does not, some fold's `children[].title` has drifted
+from its heading and coverage is being under-counted — fix that fold page before
+folding anything new. This check is the only thing standing between a paraphrase and
+a silent double-fold.
+
 Use batch exponent `k` with size `2^k`; default to `k=4`. An explicit entry range
-may override it. If fewer entries exist than requested, report the shortfall and
-stop rather than folding a partial batch.
+may override it. If fewer than `2^k` **uncovered** entries exist, report the shortfall
+and stop rather than folding a partial batch.
 
 Read the selected log entries completely. Read referenced child pages only when
 the log lacks enough context: target 0-10 reads, hard ceiling 15. Missing pages
