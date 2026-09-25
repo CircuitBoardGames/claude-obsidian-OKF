@@ -2214,13 +2214,17 @@ def _read_runtime_bytes_at(
 
         raw, after = _read_current()
         _require_stable_identity(after)
-        if after.st_mtime_ns == opened.st_mtime_ns:
-            return raw
-        # A metadata-only touch (a sync client refreshing timestamps) moves the
-        # mtime without moving a byte. Re-read once and accept only if the bytes
-        # are identical to the first read; any difference means the content
-        # changed while it was read and the read fails closed.
-        time.sleep(_RUNTIME_READ_STABILITY_DELAY)
+        # AN UNCHANGED st_mtime_ns IS NOT PROOF THE BYTES ARE UNCHANGED. Linux stamps mtime from a
+        # coarse clock unless the filesystem has multigrain timestamps: on this fork's CI box
+        # (Debian 13, 6.12, ext4) a same-size rewrite within the same tick left st_mtime_ns
+        # identical in 199 of 200 trials (2026-09-25). The shortcut that returned here on an equal
+        # mtime therefore let upstream's own same-size-tamper test through, and would let a real
+        # tampered runtime file through. So the bytes are ALWAYS confirmed by a second read. The
+        # settle delay is kept only for a moved mtime -- a metadata-only touch (a sync client
+        # refreshing timestamps) or a writer that may still be active; with an equal mtime the
+        # second read is immediate. Any difference between the two reads fails closed.
+        if after.st_mtime_ns != opened.st_mtime_ns:
+            time.sleep(_RUNTIME_READ_STABILITY_DELAY)
         confirmation, confirmed = _read_current()
         _require_stable_identity(confirmed)
         if confirmation != raw:
